@@ -25,6 +25,11 @@ int main(int argc, char** argv) {
   int index = 1;
   int totalLines = 0;
 
+  if (argc == 2 && option != All) {
+    printf("Usage: ./wordcount requires an input file.\n");
+    return EXIT_FAILURE;
+  }
+
   if (option != All) {
     index = 2;
   }
