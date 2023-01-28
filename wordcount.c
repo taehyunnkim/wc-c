@@ -49,6 +49,7 @@ int main(int argc, char** argv) {
   return EXIT_SUCCESS;
 }
 
+// Return option based on the given argument
 enum options parseOption(char *argument) {
   if (strncmp(argument, "-l", 2) == 0) {
     return Lines;
@@ -61,6 +62,7 @@ enum options parseOption(char *argument) {
   }
 }
 
+// Print the count for a given file based on the option passed
 void printResult(enum options option, int *result, char *filename) {
   switch (option) {
     case All:
@@ -78,6 +80,7 @@ void printResult(enum options option, int *result, char *filename) {
   }
 }
 
+// Process the file and store the count in the result array
 void processFile(FILE *fp, int *result) {
   char readbuf[READBUFSIZE];
   int linec = 0;
@@ -90,6 +93,8 @@ void processFile(FILE *fp, int *result) {
   fclose(fp);
 }
 
+// Process a string for number of words and characters
+// and store them in the result array
 void processLine(char *c, int *result) {
   size_t characters = 0;
   size_t words = 0;
