@@ -1,87 +1,76 @@
 // Copyright 2023 Eric Kim
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
+#include <ctype.h>
 
 #define READBUFSIZE 501
 
-enum options { All, Words, Characters, Lines };
+enum options { Lines, Words, Characters, All };
 
-enum options parseOption(char *argument);
+void parseOption(char **args, int argc, int *argindex, enum options *option);
 void printResult(enum options option, int *result, char *filename);
 void processFile(FILE *fp, int *result);
 void processLine(char *line, int *result);
 
 int main(int argc, char** argv) {
-  if (argc == 1) {
-    printf("Usage: ./wordcount requires an input file.\n");
-    return EXIT_FAILURE;
-  }
-
+  enum options option;
+  int fileindex;
   FILE *fin;
-  enum options option = parseOption(argv[1]);
-  int index = 1;
-  int totalLines = 0;
-
-  if (argc == 2 && option != All) {
-    printf("Usage: ./wordcount requires an input file.\n");
-    return EXIT_FAILURE;
-  }
-
-  if (option != All) {
-    index = 2;
-  }
-
-  for (; index < argc; index++) {
-    if ((fin = fopen(argv[index], "r")) == NULL) {
-      fprintf(stderr, "%s will not open. Skipping.\n", argv[index]);
-      continue;
+  int totallines = 0;
+  parseOption(argv, argc, &fileindex, &option);
+  for (; fileindex < argc; fileindex++) {
+    if ((fin = fopen(argv[fileindex], "r")) == NULL) {
+      fprintf(stderr, "%s will not open. Skipping.\n", argv[fileindex]);
+    } else {
+      int result[] = { 0, 0, 0};  // [lines, words, characters]
+      processFile(fin, result);
+      printResult(option, result, argv[fileindex]);
+      totallines += result[0];
     }
-
-    int result[] = {0, 0, 0};
-    processFile(fin, result);
-
-    totalLines += result[0];
-    printResult(option, result, argv[index]);
   }
-
   if (option == All) {
-    printf("Total Lines = %d\n", totalLines);
+    printf("Total Lines = %d\n", totallines);
   }
-
   return EXIT_SUCCESS;
 }
 
-// Return option based on the given argument
-enum options parseOption(char *argument) {
-  if (strncmp(argument, "-l", 2) == 0) {
-    return Lines;
-  } else if (strncmp(argument, "-w", 2) == 0) {
-    return Words;
-  } else if (strncmp(argument, "-c", 2) == 0) {
-    return Characters;
-  } else {
-    return All;
+// Given the arguments, set the correct option and reposition the index to point
+// at a file name. Exits program if no input file is given.
+void parseOption(char **args, int argc, int *argindex, enum options *option) {
+  *argindex = 1, *option = All;
+  if (argc > 1) {
+    if (strncmp(args[*argindex], "-l", 2) == 0) {
+      *option = Lines;
+    } else if (strncmp(args[*argindex], "-w", 2) == 0) {
+      *option = Words;
+    } else if (strncmp(args[*argindex], "-c", 2) == 0) {
+      *option = Characters;
+    }
+    while (*argindex < argc &&
+          (strncmp(args[*argindex], "-l", 2) == 0 ||
+           strncmp(args[*argindex], "-w", 2) == 0 ||
+           strncmp(args[*argindex], "-c", 2) == 0)) {
+      ++*argindex;
+    }
+  }
+  if (argc == 1 || *argindex == argc) {
+    fprintf(stderr, "Usage: ./wordcount requires an input file.\n");
+    exit(EXIT_FAILURE);
   }
 }
 
-// Print the count for a given file based on the option passed
+// Print the formatted count for a given file based on the option
+// and the result array
 void printResult(enum options option, int *result, char *filename) {
-  switch (option) {
-    case All:
-      printf("%d %d %d %s\n", result[0], result[1], result[2], filename);
-      break;
-    case Lines:
-      printf("%d\n", result[0]);
-      break;
-    case Words:
-      printf("%d\n", result[1]);
-      break;
-    case Characters:
-      printf("%d\n", result[2]);
-      break;
+  if (option == All) {
+      printf(" %d %d %d %s\n",
+              result[Lines],
+              result[Words],
+              result[Characters],
+              filename);
+  } else {
+      printf("%d\n", result[option]);
   }
 }
 
@@ -93,7 +82,6 @@ void processFile(FILE *fp, int *result) {
     linec++;
     processLine(readbuf, result);
   }
-
   result[0] = linec;
   fclose(fp);
 }
@@ -103,14 +91,10 @@ void processFile(FILE *fp, int *result) {
 void processLine(char *c, int *result) {
   size_t characters = 0;
   size_t words = 0;
-
-  // Skip white spaces
   while (*c && isspace(*c)) {
     characters++;
     c++;
   }
-
-  // Count words
   while (*c) {
     words++;
     while (*c && !isspace(*c)) {
@@ -123,7 +107,6 @@ void processLine(char *c, int *result) {
       c++;
     }
   }
-
-  result[1] += words;
-  result[2] += characters;
+  result[Words] += words;
+  result[Characters] += characters;
 }
