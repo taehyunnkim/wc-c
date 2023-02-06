@@ -19,6 +19,7 @@ int main(int argc, char** argv) {
   FILE *fin;
   int totallines = 0;
   parseOption(argv, argc, &fileindex, &option);
+
   for (; fileindex < argc; fileindex++) {
     if ((fin = fopen(argv[fileindex], "r")) == NULL) {
       fprintf(stderr, "%s will not open. Skipping.\n", argv[fileindex]);
@@ -29,16 +30,20 @@ int main(int argc, char** argv) {
       totallines += result[0];
     }
   }
+
   if (option == All) {
     printf("Total Lines = %d\n", totallines);
   }
+
   return EXIT_SUCCESS;
 }
 
-// Given the arguments, set the correct option and reposition the index to point
-// at a file name. Exits program if no input file is given.
+// Given the program arguments, set the correct option and reposition the
+// index to point at a file name. Exit program if no input file is
+// found in the arguments.
 void parseOption(char **args, int argc, int *argindex, enum options *option) {
   *argindex = 1, *option = All;
+
   if (argc > 1) {
     if (strncmp(args[*argindex], "-l", 2) == 0) {
       *option = Lines;
@@ -47,6 +52,7 @@ void parseOption(char **args, int argc, int *argindex, enum options *option) {
     } else if (strncmp(args[*argindex], "-c", 2) == 0) {
       *option = Characters;
     }
+
     while (*argindex < argc &&
           (strncmp(args[*argindex], "-l", 2) == 0 ||
            strncmp(args[*argindex], "-w", 2) == 0 ||
@@ -54,6 +60,7 @@ void parseOption(char **args, int argc, int *argindex, enum options *option) {
       ++*argindex;
     }
   }
+
   if (argc == 1 || *argindex == argc) {
     fprintf(stderr, "Usage: ./wordcount requires an input file.\n");
     exit(EXIT_FAILURE);
@@ -74,7 +81,8 @@ void printResult(enum options option, int *result, char *filename) {
   }
 }
 
-// Process the file and store the count in the result array
+// Process the file and store the line, word, and
+// character count in the result array
 void processFile(FILE *fp, int *result) {
   char readbuf[READBUFSIZE];
   int linec = 0;
@@ -82,12 +90,13 @@ void processFile(FILE *fp, int *result) {
     linec++;
     processLine(readbuf, result);
   }
+
   result[0] = linec;
   fclose(fp);
 }
 
 // Process a string for number of words and characters
-// and store them in the result array
+// and store the result in the result array
 void processLine(char *c, int *result) {
   size_t characters = 0;
   size_t words = 0;
@@ -95,6 +104,7 @@ void processLine(char *c, int *result) {
     characters++;
     c++;
   }
+
   while (*c) {
     words++;
     while (*c && !isspace(*c)) {
@@ -107,6 +117,7 @@ void processLine(char *c, int *result) {
       c++;
     }
   }
+
   result[Words] += words;
   result[Characters] += characters;
 }
